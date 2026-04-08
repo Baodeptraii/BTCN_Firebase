@@ -1,5 +1,9 @@
 package com.example.mung_tam_thang_tu;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -42,7 +46,6 @@ public class BookingActivity extends AppCompatActivity {
 
         txtMovieTitle.setText(movieTitle);
 
-        // Giả lập danh sách suất chiếu (Showtimes)
         List<String> showtimes = new ArrayList<>();
         showtimes.add("18:00 - 20:00");
         showtimes.add("20:30 - 22:30");
@@ -71,10 +74,31 @@ public class BookingActivity extends AppCompatActivity {
                 .add(ticket)
                 .addOnSuccessListener(documentReference -> {
                     Toast.makeText(this, "Đặt vé thành công!", Toast.LENGTH_SHORT).show();
-                    finish(); // Quay lại màn hình chính
+                    
+                    // Lên lịch thông báo nhắc nhở (Giả định sau 10 giây để test ngay)
+                    scheduleNotification(movieTitle, showtime);
+                    
+                    finish();
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
+    }
+
+    private void scheduleNotification(String title, String time) {
+        Intent intent = new Intent(this, NotificationReceiver.class);
+        intent.putExtra("movieTitle", title);
+        intent.putExtra("showtime", time);
+
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        
+        // Để demo, tôi đặt thông báo xuất hiện sau 10 giây kể từ lúc nhấn đặt vé
+        long triggerTime = System.currentTimeMillis() + 10000; 
+
+        if (alarmManager != null) {
+            alarmManager.set(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent);
+        }
     }
 }
